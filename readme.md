@@ -1,7 +1,7 @@
 # Tilawah — Random Quran Ayah
 
 A minimal, beautiful **Qur'an random ayah generator** built as a **fully static web app**.  
-It displays Qur'an verses with **Arabic text, translation, tajweed coloring, tafsir, and navigation controls** in a clean UI.
+It displays Qur'an verses with **Arabic text, translation, tafsir, and navigation controls** in a clean UI.
 
 🌐 Live site:  
 https://ratuuul.github.io/tilawah
