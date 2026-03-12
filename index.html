@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="en" dir="ltr" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quran — Random Ayah</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="style.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=Spectral:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=Noto+Serif+Bengali:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="loading-overlay" id="loadingOverlay">
+      <div class="loading-arabic">بِسْمِ اللَّهِ</div>
+      <div class="loading-text">Loading Ayah</div>
+      <div class="loading-bar"></div>
+    </div>
+
+    <div
+      class="drawer-overlay"
+      id="drawerOverlay"
+      onclick="closeBookmarkDrawer()"
+    ></div>
+    <div class="bookmark-drawer" id="bookmarkDrawer">
+      <div class="drawer-header">
+        <div class="drawer-title">Bookmarks</div>
+        <button class="drawer-close" onclick="closeBookmarkDrawer()">✕</button>
+      </div>
+      <div class="drawer-body" id="bookmarkList">
+        <div class="bookmark-empty">
+          No bookmarks yet.<br />Bookmark an ayah to save it here.
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <div class="app">
+      <header class="header">
+        <div class="header-brand">
+          <div class="logo-icon">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z" />
+              <path d="M19 3v4M21 5h-4" stroke-width="1.2" />
+            </svg>
+          </div>
+          <div class="brand-text">Tilawah</div>
+        </div>
+        <div class="header-controls">
+          <button
+            class="daily-badge"
+            id="dailyBtn"
+            onclick="toggleDailyMode()"
+            title="Daily Ayah"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polygon
+                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
+              />
+            </svg>
+            Daily
+          </button>
+          <button
+            class="icon-btn"
+            id="bookmarkDrawerBtn"
+            onclick="openBookmarkDrawer()"
+            title="Bookmarks"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+            </svg>
+            <span class="bookmark-count" id="bookmarkCount">0</span>
+          </button>
+          <button
+            class="icon-btn"
+            id="themeBtn"
+            onclick="toggleTheme()"
+            title="Toggle Theme"
+          >
+            <svg
+              id="themeIconDark"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="5" />
+              <line x1="12" y1="1" x2="12" y2="3" />
+              <line x1="12" y1="21" x2="12" y2="23" />
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+              <line x1="1" y1="12" x2="3" y2="12" />
+              <line x1="21" y1="12" x2="23" y2="12" />
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+            </svg>
+            <svg
+              id="themeIconLight"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              style="display: none"
+            >
+              <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z" />
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <main>
+        <div class="ayah-card" id="ayahCard">
+          <div class="surah-info">
+            <div class="surah-name-en" id="surahNameEn">—</div>
+            <div class="surah-ref">
+              <span id="surahNum">—</span>
+              <span class="surah-ref-dot"></span>
+              <span id="ayahNum">—</span>
+            </div>
+          </div>
+
+          <!-- Prev / Next contextual navigation -->
+          <div class="ayah-nav">
+            <button
+              class="nav-btn"
+              id="prevBtn"
+              onclick="navigateAyah(-1)"
+              disabled
+            >
+              <span class="nav-arrow">←</span>
+              <span class="nav-label">Prev</span>
+            </button>
+            <span class="nav-center-label" id="navLabel">—</span>
+            <button
+              class="nav-btn"
+              id="nextBtn"
+              onclick="navigateAyah(1)"
+              disabled
+            >
+              <span class="nav-label">Next</span>
+              <span class="nav-arrow">→</span>
+            </button>
+          </div>
+
+          <div class="arabic-container">
+            <div class="arabic-text" id="arabicText" dir="rtl">
+              <div
+                class="skeleton"
+                style="height: 90px; border-radius: 12px"
+              ></div>
+            </div>
+          </div>
+
+          <div class="ornamental-divider" style="margin-top: 16px">
+            <div class="divider-line"></div>
+            <div class="divider-diamond"></div>
+            <div class="divider-line"></div>
+          </div>
+
+          <!-- Translations -->
+          <div>
+            <div class="section-header">
+              <div class="section-label">Translation</div>
+              <div class="toggle-group">
+                <button
+                  class="toggle-pill active"
+                  id="toggleEn"
+                  onclick="toggleTranslation('en')"
+                >
+                  <span class="toggle-dot"></span>English
+                </button>
+                <button
+                  class="toggle-pill active"
+                  id="toggleBn"
+                  onclick="toggleTranslation('bn')"
+                >
+                  <span class="toggle-dot"></span>বাংলা
+                </button>
+              </div>
+            </div>
+
+            <div class="translation-block" id="enBlock">
+              <div class="translation-lang">English · Saheeh International</div>
+              <div class="translation-text" id="enText">
+                <div
+                  class="skeleton"
+                  style="height: 16px; margin-bottom: 12px"
+                ></div>
+                <div
+                  class="skeleton"
+                  style="height: 16px; width: 85%; margin-bottom: 12px"
+                ></div>
+                <div class="skeleton" style="height: 16px; width: 60%"></div>
+              </div>
+            </div>
+
+            <div class="translation-block" id="bnBlock">
+              <div class="translation-lang bangla-lang">
+                বাংলা · আবু বকর যাকারিয়া — তাইসিরুল কুরআন
+              </div>
+              <div class="translation-text bangla" id="bnText">
+                <div
+                  class="skeleton"
+                  style="height: 16px; margin-bottom: 12px"
+                ></div>
+                <div class="skeleton" style="height: 16px; width: 80%"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tafseer -->
+          <div class="tafseer-section">
+            <div class="section-header" style="margin-bottom: 14px">
+              <div class="section-label">Tafseer</div>
+            </div>
+
+            <div class="tafseer-accordion" id="tafseerEnAccordion">
+              <div class="tafseer-header" onclick="toggleTafseer('en')">
+                <div class="tafseer-title">
+                  📖 <span>English — Tafsir Ibn Kathir</span>
+                </div>
+                <span class="tafseer-chevron">▾</span>
+              </div>
+              <div class="tafseer-body">
+                <div class="tafseer-content en-tafseer" id="tafseerEnContent">
+                  Loading…
+                </div>
+              </div>
+            </div>
+
+            <div class="tafseer-accordion" id="tafseerBnAccordion">
+              <div class="tafseer-header" onclick="toggleTafseer('bn')">
+                <div class="tafseer-title bangla-title">
+                  📖 <span>বাংলা — তাফসির আহসানুল বায়ান</span>
+                </div>
+                <span class="tafseer-chevron">▾</span>
+              </div>
+              <div class="tafseer-body">
+                <div class="tafseer-content bn-tafseer" id="tafseerBnContent">
+                  Loading…
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Audio Player -->
+          <div class="player-section">
+            <div class="player-top">
+              <button class="play-btn" id="playBtn" onclick="togglePlay()">
+                ▶
+              </button>
+              <div class="player-meta">
+                <div class="player-reciter">Mishary Rashid Alafasy</div>
+                <div class="player-time" id="playerTime">0:00 / 0:00</div>
+              </div>
+              <button
+                class="player-replay"
+                onclick="replayAudio()"
+                title="Replay"
+              >
+                ↺
+              </button>
+            </div>
+            <div
+              class="waveform-wrap"
+              id="waveformWrap"
+              onclick="seekByClick(event)"
+            >
+              <canvas id="waveCanvas"></canvas>
+              <div class="waveform-placeholder" id="waveformPlaceholder">
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="action-bar">
+            <button class="action-btn primary" onclick="loadRandomAyah()">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polyline points="16 3 21 3 21 8" />
+                <polyline points="4 20 9 15" />
+                <line x1="21" y1="3" x2="14" y2="10" />
+                <polyline points="8 3 3 3 3 8" />
+                <line x1="3" y1="21" x2="10" y2="14" />
+              </svg>
+              Random
+            </button>
+            <button
+              class="action-btn"
+              id="bookmarkBtn"
+              onclick="toggleBookmark()"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+              </svg>
+              Save
+            </button>
+            <button class="action-btn" onclick="copyAyah()">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                <path
+                  d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+                />
+              </svg>
+              Copy
+            </button>
+            <button class="action-btn" onclick="shareAyah()">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="18" cy="5" r="3" />
+                <circle cx="6" cy="12" r="3" />
+                <circle cx="18" cy="19" r="3" />
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+              </svg>
+              Share
+            </button>
+          </div>
+        </div>
+      </main>
+
+      <footer class="footer">
+        <span>﷽</span> — Data from Quran.com API · Built with reverence
+      </footer>
+    </div>
+    <script src="app.js"></script>
+  </body>
+</html>
