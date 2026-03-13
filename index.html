@@ -2,29 +2,68 @@
 <html lang="en" dir="ltr" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Quran — Random Ayah</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Tilawah · Quran</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="assets/style.css" />
     <link
-      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=Spectral:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=Noto+Serif+Bengali:wght@300;400;500&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=Spectral:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=Noto+Serif+Bengali:wght@300;400;500&family=Noto+Naskh+Arabic:wght@400;600&family=Scheherazade+New:wght@400;500;600;700&family=Amiri:ital,wght@0,400;0,700;1,400&display=swap"
       rel="stylesheet"
     />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   </head>
   <body>
+    <!-- Loading -->
     <div class="loading-overlay" id="loadingOverlay">
       <div class="loading-arabic">بِسْمِ اللَّهِ</div>
       <div class="loading-text">Loading Ayah</div>
       <div class="loading-bar"></div>
     </div>
 
+    <!-- Tajweed Tooltip -->
+    <div id="tjTooltip">
+      <div class="tip-ar" id="tjTipAr"></div>
+      <div class="tip-rule" id="tjTipRule"></div>
+      <div class="tip-desc" id="tjTipDesc"></div>
+    </div>
+
+    <!-- Word-by-Word Popup -->
+    <div id="wbwPopup" aria-hidden="true">
+      <div class="wbw-lang-tag"></div>
+      <div class="wbw-arabic"></div>
+      <div class="wbw-trans"></div>
+    </div>
+
+    <!-- Tajweed Dashboard Overlay -->
+    <div
+      id="tjDashboard"
+      onclick="if (event.target === this) TajweedEngine.closeDash();"
+    >
+      <div class="tj-dash-card">
+        <div class="tj-dash-hd">
+          <div>
+            <div class="tj-dash-title">🎨 Tajweed Rule Book</div>
+            <div class="tj-dash-subtitle">Colour-Coded Pronunciation Guide</div>
+          </div>
+          <button class="tj-dash-close" onclick="TajweedEngine.closeDash()">
+            ✕
+          </button>
+        </div>
+        <div class="tj-dash-tabs" id="tjDashTabs"></div>
+        <div class="tj-dash-body" id="tjDashBody"></div>
+      </div>
+    </div>
+
+    <!-- Shared overlay -->
     <div
       class="drawer-overlay"
       id="drawerOverlay"
-      onclick="closeBookmarkDrawer()"
+      onclick="closeAllDrawers()"
     ></div>
-    <div class="bookmark-drawer" id="bookmarkDrawer">
+
+    <!-- Bookmark Drawer -->
+    <div class="side-drawer right" id="bookmarkDrawer">
       <div class="drawer-header">
         <div class="drawer-title">Bookmarks</div>
         <button class="drawer-close" onclick="closeBookmarkDrawer()">✕</button>
@@ -32,6 +71,571 @@
       <div class="drawer-body" id="bookmarkList">
         <div class="bookmark-empty">
           No bookmarks yet.<br />Bookmark an ayah to save it here.
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings Drawer -->
+    <div class="side-drawer left" id="settingsDrawer">
+      <div class="drawer-header">
+        <div class="drawer-title">Settings</div>
+        <button class="drawer-close" onclick="closeSettingsDrawer()">✕</button>
+      </div>
+      <div class="drawer-body">
+        <div class="settings-section">
+          <div class="settings-section-title">Typography</div>
+          <div class="settings-row">
+            <div class="settings-label">Translation Size</div>
+            <div class="settings-value" id="fontScaleVal">100%</div>
+          </div>
+          <input
+            class="settings-slider"
+            type="range"
+            min="80"
+            max="135"
+            value="100"
+            id="fontScaleSlider"
+            oninput="updateSetting('fontScale', this.value)"
+          />
+          <div class="settings-row" style="margin-top: 18px">
+            <div class="settings-label">Arabic Size</div>
+            <div class="settings-value" id="arabicScaleVal">100%</div>
+          </div>
+          <input
+            class="settings-slider"
+            type="range"
+            min="70"
+            max="130"
+            value="100"
+            id="arabicScaleSlider"
+            oninput="updateSetting('arabicScale', this.value)"
+          />
+          <div class="settings-row" style="margin-top: 18px">
+            <div class="settings-label">Line Spacing</div>
+            <div class="settings-value" id="lineScaleVal">100%</div>
+          </div>
+          <input
+            class="settings-slider"
+            type="range"
+            min="80"
+            max="140"
+            value="100"
+            id="lineScaleSlider"
+            oninput="updateSetting('lineScale', this.value)"
+          />
+        </div>
+        <div class="settings-section">
+          <div class="settings-section-title">Arabic Script</div>
+          <div class="settings-row">
+            <div class="settings-label">Letter Spacing</div>
+            <div class="settings-value" id="arabicLetterSpacingVal">0px</div>
+          </div>
+          <input
+            class="settings-slider"
+            type="range"
+            min="-2"
+            max="8"
+            value="0"
+            step="0.5"
+            id="arabicLetterSpacingSlider"
+            oninput="updateSetting('arabicLetterSpacing', this.value)"
+          />
+          <div class="settings-row" style="margin-top: 18px">
+            <div class="settings-label">Word Spacing</div>
+            <div class="settings-value" id="arabicWordSpacingVal">8px</div>
+          </div>
+          <input
+            class="settings-slider"
+            type="range"
+            min="0"
+            max="32"
+            value="8"
+            step="1"
+            id="arabicWordSpacingSlider"
+            oninput="updateSetting('arabicWordSpacing', this.value)"
+          />
+        </div>
+        <div class="settings-section">
+          <div class="settings-section-title">Arabic Font</div>
+          <div class="font-picker" id="fontPicker">
+            <div
+              class="font-option active"
+              data-font="almajeed"
+              onclick="selectArabicFont('almajeed')"
+            >
+              <div
+                class="font-option-preview"
+                style="
+                  font-family:
+                    &quot;AlMajeedQuran&quot;, &quot;Scheherazade New&quot;,
+                    serif;
+                "
+              >
+                بِسْمِ اللَّهِ
+              </div>
+              <div class="font-option-name">Al Majeed</div>
+            </div>
+            <div
+              class="font-option"
+              data-font="scheherazade"
+              onclick="selectArabicFont('scheherazade')"
+            >
+              <div
+                class="font-option-preview"
+                style="font-family: &quot;Scheherazade New&quot;, serif"
+              >
+                بِسْمِ اللَّهِ
+              </div>
+              <div class="font-option-name">Scheherazade</div>
+            </div>
+            <div
+              class="font-option"
+              data-font="amiri"
+              onclick="selectArabicFont('amiri')"
+            >
+              <div
+                class="font-option-preview"
+                style="font-family: &quot;Amiri&quot;, serif"
+              >
+                بِسْمِ اللَّهِ
+              </div>
+              <div class="font-option-name">Amiri</div>
+            </div>
+            <div
+              class="font-option"
+              data-font="naskh"
+              onclick="selectArabicFont('naskh')"
+            >
+              <div
+                class="font-option-preview"
+                style="font-family: &quot;Noto Naskh Arabic&quot;, serif"
+              >
+                بِسْمِ اللَّهِ
+              </div>
+              <div class="font-option-name">Noto Naskh</div>
+            </div>
+            <div
+              class="font-option"
+              data-font="hafs"
+              onclick="selectArabicFont('hafs')"
+            >
+              <div
+                class="font-option-preview"
+                style="
+                  font-family:
+                    &quot;Traditional Arabic&quot;,
+                    &quot;Scheherazade New&quot;, serif;
+                "
+              >
+                بِسْمِ اللَّهِ
+              </div>
+              <div class="font-option-name">Hafs (System)</div>
+            </div>
+            <div
+              class="font-option"
+              data-font="saleem"
+              onclick="selectArabicFont('saleem')"
+            >
+              <div
+                class="font-option-preview"
+                style="
+                  font-family:
+                    &quot;PDMS Saleem&quot;, &quot;Scheherazade New&quot;, serif;
+                "
+              >
+                بِسْمِ اللَّهِ
+              </div>
+              <div class="font-option-name">PDMS Saleem</div>
+            </div>
+          </div>
+        </div>
+        <button class="settings-reset" onclick="resetSettings()">
+          Reset to Defaults
+        </button>
+      </div>
+    </div>
+
+    <!-- Note Modal -->
+    <div class="modal-overlay" id="noteModal">
+      <div class="modal">
+        <div class="modal-title">Note</div>
+        <div class="modal-ref" id="noteModalRef"></div>
+        <textarea
+          class="modal-textarea"
+          id="noteModalText"
+          placeholder="Add a personal note for this ayah…"
+        ></textarea>
+        <div class="modal-actions">
+          <button class="modal-btn" onclick="closeNoteModal()">Cancel</button>
+          <button class="modal-btn save" onclick="saveNote()">Save Note</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Share Card (off-screen for capture) -->
+    <div class="share-card-wrap">
+      <div class="share-card" id="shareCard">
+        <div class="share-card-border"></div>
+        <div class="share-card-bismillah">
+          بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ
+        </div>
+        <div class="share-card-arabic" id="scArabic"></div>
+        <div class="share-card-divider">
+          <div class="share-card-dl"></div>
+          <div class="share-card-diamond"></div>
+          <div class="share-card-dl"></div>
+        </div>
+        <div class="share-card-trans" id="scTrans"></div>
+        <div class="share-card-ref" id="scRef"></div>
+        <div class="share-card-footer">Tilawah · Quran</div>
+      </div>
+    </div>
+
+    <!-- Full Surah Page -->
+    <div class="surah-page" id="surahPage">
+      <div class="sp-header">
+        <button class="sp-back" onclick="closeSurahPage()">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            style="width: 14px; height: 14px"
+          >
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+          Back
+        </button>
+        <div class="sp-title">
+          <div class="sp-title-name" id="spTitleName">—</div>
+          <div class="sp-title-sub" id="spTitleSub">—</div>
+        </div>
+        <div class="sp-controls">
+          <button
+            class="sp-back"
+            style="
+              background: var(--gold-dim);
+              border: 1px solid var(--border2);
+            "
+            onclick="toggleTheme()"
+            title="Toggle theme"
+            id="spThemeBtn"
+          >
+            <svg
+              id="spThemeIconDark"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              style="width: 13px; height: 13px"
+            >
+              <circle cx="12" cy="12" r="5" />
+              <line x1="12" y1="1" x2="12" y2="3" />
+              <line x1="12" y1="21" x2="12" y2="23" />
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+              <line x1="1" y1="12" x2="3" y2="12" />
+              <line x1="21" y1="12" x2="23" y2="12" />
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+            </svg>
+            <svg
+              id="spThemeIconLight"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              style="width: 13px; height: 13px; display: none"
+            >
+              <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z" />
+            </svg>
+          </button>
+          <button
+            class="sp-back"
+            style="background: transparent; border: 1px solid var(--border)"
+            onclick="spDownloadPDF()"
+            title="Download PDF"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              style="width: 13px; height: 13px"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            PDF
+          </button>
+          <button
+            class="sp-back sp-tj-btn"
+            id="spTajweedBtn"
+            onclick="toggleSpOption('tajweed')"
+            title="Toggle Tajweed Colors"
+            style="
+              background: var(--gold-dim);
+              border: 1px solid var(--border2);
+              color: var(--gold-1);
+            "
+          >
+            🎨 Tajweed
+          </button>
+          <div class="sp-dropdown" id="spDropdown">
+            <button class="sp-dropdown-btn" onclick="toggleSpDropdown()">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                style="width: 13px; height: 13px"
+              >
+                <line x1="4" y1="6" x2="20" y2="6" />
+                <line x1="4" y1="12" x2="14" y2="12" />
+                <line x1="4" y1="18" x2="18" y2="18" />
+              </svg>
+              View
+            </button>
+            <div class="sp-dropdown-menu" id="spDropdownMenu">
+              <div
+                class="sp-option active"
+                id="spOptEn"
+                onclick="toggleSpOption('en')"
+              >
+                <span>English Translation</span>
+                <div class="sp-option-check">✓</div>
+              </div>
+              <div
+                class="sp-option"
+                id="spOptBn"
+                onclick="toggleSpOption('bn')"
+              >
+                <span>বাংলা Translation</span>
+                <div class="sp-option-check">✓</div>
+              </div>
+              <div
+                class="sp-option"
+                id="spOptTfEn"
+                onclick="toggleSpOption('tfEn')"
+              >
+                <span>English Tafsir (Ibn Kathir)</span>
+                <div class="sp-option-check">✓</div>
+              </div>
+              <div
+                class="sp-option"
+                id="spOptTfBn"
+                onclick="toggleSpOption('tfBn')"
+              >
+                <span>বাংলা Tafseer</span>
+                <div class="sp-option-check">✓</div>
+              </div>
+              <div
+                style="border-top: 1px solid var(--border); margin: 6px 0"
+              ></div>
+              <div
+                class="sp-option active"
+                id="spOptTajweed"
+                onclick="toggleSpOption('tajweed')"
+              >
+                <span>Tajweed Colors</span>
+                <div class="sp-option-check">✓</div>
+              </div>
+              <div
+                style="border-top: 1px solid var(--border); margin: 6px 0"
+              ></div>
+              <div
+                class="sp-option active"
+                id="spOptWbw"
+                onclick="toggleSpOption('wbw')"
+              >
+                <span>Word Meanings</span>
+                <div class="sp-option-check">✓</div>
+              </div>
+              <div class="wbw-lang-btns" id="wbwLangRow">
+                <button
+                  class="wbw-lang-btn active"
+                  id="wbwLangEn"
+                  onclick="setWbwLang('en')"
+                >
+                  EN
+                </button>
+                <button
+                  class="wbw-lang-btn"
+                  id="wbwLangBn"
+                  onclick="setWbwLang('bn')"
+                  style="
+                    font-family: &quot;Noto Serif Bengali&quot;, sans-serif;
+                    font-size: 11px;
+                    text-transform: none;
+                    letter-spacing: 0;
+                  "
+                >
+                  বাংলা
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- PDF Download Modal -->
+      <div class="pdf-modal-overlay" id="pdfModal">
+        <div class="pdf-modal">
+          <div class="pdf-modal-title">Download Surah as PDF</div>
+          <div class="pdf-opt-row">
+            <div
+              class="pdf-opt selected"
+              id="pdfOptTajOn"
+              onclick="selectPdfOpt(true)"
+            >
+              <div class="pdf-opt-icon">🎨</div>
+              <div class="pdf-opt-label">With Tajweed Colors</div>
+            </div>
+            <div
+              class="pdf-opt"
+              id="pdfOptTajOff"
+              onclick="selectPdfOpt(false)"
+            >
+              <div class="pdf-opt-icon">📄</div>
+              <div class="pdf-opt-label">Plain Text</div>
+            </div>
+          </div>
+          <div
+            style="
+              font-family: &quot;Cinzel&quot;, serif;
+              font-size: 9px;
+              letter-spacing: 0.1em;
+              color: var(--text3);
+              text-align: center;
+              margin-bottom: 16px;
+            "
+          >
+            Opens browser print dialog → Save as PDF
+          </div>
+          <div class="pdf-modal-actions">
+            <button class="pdf-modal-btn" onclick="closePdfModal()">
+              Cancel
+            </button>
+            <button
+              class="pdf-modal-btn confirm"
+              onclick="confirmPdfDownload()"
+            >
+              Print / Save PDF
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="sp-content" id="spContent">
+        <div
+          style="text-align: center; padding: 80px 24px; color: var(--text3)"
+        >
+          <div class="loading-arabic" style="font-size: 32px">
+            بِسْمِ اللَّهِ
+          </div>
+          <div
+            style="
+              margin-top: 16px;
+              font-family: &quot;Cinzel&quot;, serif;
+              font-size: 11px;
+              letter-spacing: 0.2em;
+            "
+          >
+            Loading Surah…
+          </div>
+        </div>
+      </div>
+      <div class="sp-player" id="spPlayer">
+        <!-- Row 1: ayah label + loop/auto controls -->
+        <div class="sp-player-meta">
+          <div class="sp-player-ayah" id="spPlayerAyah">— / —</div>
+          <div class="sp-player-controls">
+            <button
+              class="sp-ctrl-btn"
+              id="spLoopBtn"
+              onclick="toggleSpLoop()"
+              title="Loop ayah"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polyline points="17 1 21 5 17 9" />
+                <path d="M3 11V9a4 4 0 0 1 4-4h14" />
+                <polyline points="7 23 3 19 7 15" />
+                <path d="M21 13v2a4 4 0 0 1-4 4H3" />
+              </svg>
+            </button>
+            <div
+              class="sp-auto-toggle on"
+              id="spAutoToggle"
+              onclick="toggleSpAuto()"
+              title="Auto-advance"
+            >
+              <div class="sp-auto-label">Auto</div>
+              <div class="sp-auto-pill"></div>
+            </div>
+          </div>
+        </div>
+        <!-- Row 2: WhatsApp-style wave pill -->
+        <div class="sp-wave-pill">
+          <button class="sp-ctrl-btn" onclick="spPrevAyah()" title="Previous">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polygon points="19 20 9 12 19 4 19 20" />
+              <line x1="5" y1="19" x2="5" y2="5" />
+            </svg>
+          </button>
+          <button class="sp-play-main" id="spPlayBtn" onclick="spTogglePlay()">
+            <svg id="spPlayIcon" viewBox="0 0 24 24" fill="currentColor">
+              <polygon points="5,3 19,12 5,21" />
+            </svg>
+            <svg
+              id="spPauseIcon"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              style="display: none"
+            >
+              <rect x="6" y="4" width="4" height="16" />
+              <rect x="14" y="4" width="4" height="16" />
+            </svg>
+          </button>
+          <button class="sp-ctrl-btn" onclick="spNextAyah()" title="Next">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polygon points="5 4 15 12 5 20 5 4" />
+              <line x1="19" y1="5" x2="19" y2="19" />
+            </svg>
+          </button>
+          <div class="sp-wave-wrap" id="spWaveWrap" onclick="spWaveSeek(event)">
+            <canvas id="spWaveCanvas" height="36"></canvas>
+          </div>
+          <div class="sp-player-time" id="spPlayerTime">0:00</div>
         </div>
       </div>
     </div>
@@ -76,6 +680,25 @@
               />
             </svg>
             Daily
+          </button>
+          <button
+            class="icon-btn"
+            onclick="openSettingsDrawer()"
+            title="Settings"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="3" />
+              <path
+                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
+              />
+            </svg>
           </button>
           <button
             class="icon-btn"
@@ -136,6 +759,32 @@
         </div>
       </header>
 
+      <!-- Go To Bar -->
+      <div class="goto-bar">
+        <span class="goto-label">Go to</span>
+        <div class="goto-inputs">
+          <input
+            class="goto-input"
+            type="number"
+            id="gotoSurah"
+            min="1"
+            max="114"
+            placeholder="Surah"
+            onkeydown="if (event.key === 'Enter') goToAyah();"
+          />
+          <span class="goto-sep">:</span>
+          <input
+            class="goto-input"
+            type="number"
+            id="gotoAyah"
+            min="1"
+            placeholder="Ayah"
+            onkeydown="if (event.key === 'Enter') goToAyah();"
+          />
+        </div>
+        <button class="goto-btn" onclick="goToAyah()">Go</button>
+      </div>
+
       <main>
         <div class="ayah-card" id="ayahCard">
           <div class="surah-info">
@@ -147,7 +796,6 @@
             </div>
           </div>
 
-          <!-- Prev / Next contextual navigation -->
           <div class="ayah-nav">
             <button
               class="nav-btn"
@@ -155,8 +803,8 @@
               onclick="navigateAyah(-1)"
               disabled
             >
-              <span class="nav-arrow">←</span>
-              <span class="nav-label">Prev</span>
+              <span class="nav-arrow">←</span
+              ><span class="nav-label">Prev</span>
             </button>
             <span class="nav-center-label" id="navLabel">—</span>
             <button
@@ -165,8 +813,8 @@
               onclick="navigateAyah(1)"
               disabled
             >
-              <span class="nav-label">Next</span>
-              <span class="nav-arrow">→</span>
+              <span class="nav-label">Next</span
+              ><span class="nav-arrow">→</span>
             </button>
           </div>
 
@@ -185,7 +833,6 @@
             <div class="divider-line"></div>
           </div>
 
-          <!-- Translations -->
           <div>
             <div class="section-header">
               <div class="section-label">Translation</div>
@@ -206,7 +853,6 @@
                 </button>
               </div>
             </div>
-
             <div class="translation-block" id="enBlock">
               <div class="translation-lang">English · Saheeh International</div>
               <div class="translation-text" id="enText">
@@ -221,10 +867,9 @@
                 <div class="skeleton" style="height: 16px; width: 60%"></div>
               </div>
             </div>
-
             <div class="translation-block" id="bnBlock">
               <div class="translation-lang bangla-lang">
-                বাংলা · আবু বকর যাকারিয়া — তাইসিরুল কুরআন
+                বাংলা · তাইসিরুল কুরআন
               </div>
               <div class="translation-text bangla" id="bnText">
                 <div
@@ -236,16 +881,26 @@
             </div>
           </div>
 
-          <!-- Tafseer -->
           <div class="tafseer-section">
             <div class="section-header" style="margin-bottom: 14px">
               <div class="section-label">Tafseer</div>
             </div>
-
             <div class="tafseer-accordion" id="tafseerEnAccordion">
               <div class="tafseer-header" onclick="toggleTafseer('en')">
                 <div class="tafseer-title">
-                  📖 <span>English — Tafsir Ibn Kathir</span>
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    style="width: 14px; height: 14px"
+                  >
+                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+                  </svg>
+                  <span>English — Tafsir Ibn Kathir</span>
                 </div>
                 <span class="tafseer-chevron">▾</span>
               </div>
@@ -255,11 +910,22 @@
                 </div>
               </div>
             </div>
-
             <div class="tafseer-accordion" id="tafseerBnAccordion">
               <div class="tafseer-header" onclick="toggleTafseer('bn')">
                 <div class="tafseer-title bangla-title">
-                  📖 <span>বাংলা — তাফসির আহসানুল বায়ান</span>
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    style="width: 14px; height: 14px"
+                  >
+                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+                  </svg>
+                  <span>বাংলা — তাফসির আহসানুল বায়ান</span>
                 </div>
                 <span class="tafseer-chevron">▾</span>
               </div>
@@ -278,7 +944,50 @@
                 ▶
               </button>
               <div class="player-meta">
-                <div class="player-reciter">Mishary Rashid Alafasy</div>
+                <div class="reciter-dropdown" id="reciterDropdown">
+                  <button
+                    class="reciter-btn"
+                    onclick="toggleReciterDropdown(event)"
+                    aria-label="Select reciter"
+                  >
+                    <div class="reciter-btn-icon">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <path d="M9 18V5l12-2v13" />
+                        <circle cx="6" cy="18" r="3" />
+                        <circle cx="18" cy="16" r="3" />
+                      </svg>
+                    </div>
+                    <div class="reciter-btn-text">
+                      <div class="reciter-btn-name" id="reciterBtnName">
+                        Mishary Rashid Al‑Afasy
+                      </div>
+                      <div class="reciter-btn-style" id="reciterBtnStyle">
+                        Hafs · Egypt
+                      </div>
+                    </div>
+                    <svg
+                      class="reciter-btn-arrow"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                  </button>
+                  <div class="reciter-menu" id="reciterMenu">
+                    <div class="reciter-menu-label">Choose Reciter</div>
+                  </div>
+                </div>
                 <div class="player-time" id="playerTime">0:00 / 0:00</div>
               </div>
               <button
@@ -286,7 +995,18 @@
                 onclick="replayAudio()"
                 title="Replay"
               >
-                ↺
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  style="width: 14px; height: 14px"
+                >
+                  <polyline points="1 4 1 10 7 10" />
+                  <path d="M3.51 15a9 9 0 1 0 .49-3.93" />
+                </svg>
               </button>
             </div>
             <div
@@ -377,6 +1097,35 @@
                 <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
               </svg>
               Share
+            </button>
+            <button class="action-btn" onclick="shareImage()">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <circle cx="8.5" cy="8.5" r="1.5" />
+                <polyline points="21 15 16 10 5 21" />
+              </svg>
+              Image
+            </button>
+            <button class="action-btn surah-btn" onclick="openSurahPage()">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+              </svg>
+              Full Surah
             </button>
           </div>
         </div>
