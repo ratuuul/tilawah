@@ -1694,7 +1694,7 @@ body::before {
   border-bottom: 1px solid var(--border);
 }
 .sp-bismillah {
-  font-family: "AlMajeedQuran", "Noto Naskh Arabic", serif;
+  font-family: "Scheherazade New", serif;
   font-size: clamp(22px, 4vw, 32px);
   direction: rtl;
   color: var(--gold-1);
